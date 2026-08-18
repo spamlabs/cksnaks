@@ -4,7 +4,736 @@ import {
   Bone, 
   Gift, 
   Lock, 
-  Unlock, 
+  Unlock, <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarjeta de Lealtad - Snacks Perrunos</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .stamp-pop {
+      animation: stampPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes stampPop {
+      0% {
+        transform: scale(0.3) rotate(-15deg);
+        opacity: 0;
+      }
+      70% {
+        transform: scale(1.15) rotate(5deg);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+
+    .pulse-subtle {
+      animation: pulseSubtle 2s infinite;
+    }
+
+    @keyframes pulseSubtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+  </style>
+</head>
+<body class="bg-amber-50/90 text-amber-950 min-h-screen flex flex-col justify-between items-center p-3 sm:p-6 select-none">
+
+  <!-- BARRA SUPERIOR DE CONTROL -->
+  <header class="w-full max-w-md flex justify-between items-center mb-4 bg-white p-3 rounded-2xl shadow-sm border border-amber-200/80">
+    <div class="flex items-center space-x-2">
+      <button id="toggleStaffBtn" class="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all bg-amber-100 text-amber-900 hover:bg-amber-200">
+        <i id="staffLockIcon" class="fa-solid fa-lock"></i>
+        <span id="staffLockText">Modo Cliente (Protegido)</span>
+      </button>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <button id="toggleSoundBtn" class="p-2 text-amber-800 hover:bg-amber-100 rounded-xl transition" title="Activar/Desactivar Sonido">
+        <i id="soundIcon" class="fa-solid fa-volume-high"></i>
+      </button>
+
+      <button id="openSettingsBtn" class="p-2 text-amber-800 hover:bg-amber-100 rounded-xl transition" title="Ajustes del Negocio">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- TARJETA DE FIDELIZACIÓN -->
+  <main class="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-amber-900/10 border-2 border-amber-200 overflow-hidden relative">
+    
+    <!-- Banner Superior Decorativo -->
+    <div class="bg-gradient-to-r from-amber-700 via-orange-600 to-amber-800 p-6 text-white text-center relative overflow-hidden">
+      <div class="absolute -right-4 -top-4 opacity-15">
+        <i class="fa-solid fa-dog text-8xl text-white"></i>
+      </div>
+      <div class="absolute -left-4 -bottom-4 opacity-10">
+        <i class="fa-solid fa-bone text-7xl text-white rotate-45"></i>
+      </div>
+
+      <div class="relative z-10 flex flex-col items-center">
+        <span class="inline-flex items-center space-x-1.5 bg-black/20 text-amber-100 text-xs font-semibold px-3 py-1 rounded-full mb-2 backdrop-blur-md border border-white/10">
+          <i class="fa-solid fa-bag-shopping text-xs"></i>
+          <span>Tarjeta Huellita Club</span>
+        </span>
+
+        <h1 id="cardBusinessName" class="text-xl sm:text-2xl font-black tracking-tight text-amber-50 drop-shadow-sm">
+          Bark Bites - Snacks Artesanales
+        </h1>
+
+        <div class="mt-2 flex items-center space-x-1.5 bg-white/15 px-3 py-1 rounded-full text-xs text-amber-100 border border-white/10">
+          <i class="fa-solid fa-heart text-rose-300"></i>
+          <span>Perrito: <strong id="cardCustomerName" class="text-white font-bold">Mascota</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner de Protección Anti-Fraude -->
+    <div class="bg-amber-100/80 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-xs text-amber-900">
+      <div class="flex items-center space-x-1.5">
+        <i class="fa-solid fa-shield-halved text-amber-700"></i>
+        <span class="font-medium">Sello exclusivo por personal en caja</span>
+      </div>
+      <span class="font-mono text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md">
+        PIN Activo
+      </span>
+    </div>
+
+    <!-- CASILLAS (10 SELLOS) -->
+    <div class="p-5 sm:p-6">
+      <div id="stampGrid" class="grid grid-cols-5 gap-3 sm:gap-4 mb-6">
+        <!-- Renderizado dinámicamente con JavaScript -->
+      </div>
+
+      <!-- BARRA DE PROGRESO -->
+      <div class="space-y-3">
+        <div class="flex justify-between items-center text-xs font-bold text-amber-950">
+          <span>Snacks Acumulados</span>
+          <span id="stampsCountBadge" class="bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full">
+            0 / 10
+          </span>
+        </div>
+
+        <div class="w-full h-3 bg-amber-100 rounded-full overflow-hidden p-0.5 border border-amber-200">
+          <div id="progressBar" class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <!-- SECCIÓN DE PREMIO -->
+        <div id="rewardBox" class="mt-4 p-4 rounded-2xl border-2 bg-amber-50/60 border-amber-200 transition-all">
+          <div class="flex items-start space-x-3">
+            <div id="rewardIconBox" class="p-2.5 rounded-xl bg-amber-200 text-amber-800">
+              <i id="rewardIcon" class="fa-solid fa-award text-xl"></i>
+            </div>
+            <div class="flex-1">
+              <h3 id="rewardHeading" class="text-xs font-extrabold uppercase tracking-wider text-amber-900">
+                Premio al completar la tarjeta:
+              </h3>
+              <p id="cardRewardText" class="text-sm font-bold text-amber-950 mt-0.5">
+                1 Bolsita de Premios Naturales Gratis
+              </p>
+              <p id="rewardSubtext" class="text-xs text-amber-800 mt-1 font-medium hidden">
+                Muestra esta pantalla al personal en caja para canjear la recompensa.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIE DE TARJETA -->
+    <div class="bg-amber-50/80 px-6 py-3 border-t border-amber-200/80 flex justify-between items-center text-xs">
+      <button id="resetCardBtn" class="text-amber-800 hover:text-amber-950 font-semibold flex items-center space-x-1">
+        <i class="fa-solid fa-rotate-right"></i>
+        <span>Reiniciar Tarjeta</span>
+      </button>
+
+      <span class="text-amber-600 text-[11px] font-medium">
+        HuellitaPass v2.0
+      </span>
+    </div>
+  </main>
+
+  <footer class="mt-4 text-center text-xs text-amber-900/70 font-medium">
+    <span id="footerBusinessName">Bark Bites - Snacks Artesanales</span> • Control de Fidelización
+  </footer>
+
+  <!-- MODAL DE ENTRADA DE PIN (SEGURO Y ENMASCARADO) -->
+  <div id="pinModal" class="fixed inset-0 bg-amber-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl border-2 border-amber-200">
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center space-x-2 text-amber-950 font-bold text-sm">
+          <i class="fa-solid fa-key text-amber-600"></i>
+          <span>PIN de Encargado</span>
+        </div>
+        <button id="closePinModalBtn" class="p-1 rounded-full text-amber-500 hover:bg-amber-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-amber-800 mb-4">
+        Ingresa el PIN de seguridad para autorizar la acción.
+      </p>
+
+      <form id="pinForm" class="space-y-4">
+        <div class="relative">
+          <input
+            type="password"
+            id="pinInput"
+            placeholder="PIN de autorización"
+            class="w-full p-3 pr-10 rounded-xl border-2 border-amber-300 focus:outline-none focus:border-amber-600 text-center font-bold text-lg tracking-wider text-amber-950"
+            required
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            id="togglePinVisibilityBtn"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500 hover:text-amber-700"
+          >
+            <i id="eyeIcon" class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+
+        <p id="pinErrorMsg" class="text-xs text-rose-600 font-bold text-center hidden"></p>
+
+        <div class="flex space-x-2 pt-1">
+          <button
+            type="button"
+            id="cancelPinBtn"
+            class="flex-1 py-2.5 rounded-xl border border-amber-300 text-amber-900 font-bold text-xs hover:bg-amber-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-600/30"
+          >
+            Validar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN DE REINICIO -->
+  <div id="resetConfirmModal" class="fixed inset-0 bg-amber-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl border-2 border-amber-200">
+      <h3 class="text-base font-bold text-amber-950 mb-2 flex items-center space-x-2">
+        <i class="fa-solid fa-arrows-rotate text-amber-600"></i>
+        <span>¿Reiniciar Tarjeta?</span>
+      </h3>
+      <p class="text-xs text-amber-800 mb-6">
+        Esta acción vaciará los 10 sellos de <strong id="resetCustomerName">Mascota</strong> para iniciar una nueva tarjeta.
+      </p>
+
+      <div class="flex space-x-3">
+        <button
+          id="cancelResetBtn"
+          class="flex-1 py-2.5 rounded-xl border border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-50"
+        >
+          Cancelar
+        </button>
+        <button
+          id="confirmResetBtn"
+          class="flex-1 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 shadow-md shadow-amber-600/30"
+        >
+          Sí, Reiniciar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AJUSTES DEL NEGOCIO -->
+  <div id="settingsModal" class="fixed inset-0 bg-amber-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border-2 border-amber-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4 border-b border-amber-100 pb-3">
+        <h3 class="text-base font-bold text-amber-950 flex items-center space-x-2">
+          <i class="fa-solid fa-gear text-amber-600"></i>
+          <span>Ajustes del Negocio</span>
+        </h3>
+        <button id="closeSettingsModalBtn" class="p-1 rounded-full text-amber-500 hover:bg-amber-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="settingsForm" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-amber-950 mb-1">
+            Nombre del Negocio:
+          </label>
+          <input
+            type="text"
+            id="settingBusinessName"
+            class="w-full p-2.5 rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block font-bold text-amber-950 mb-1">
+            Nombre de la Mascota / Cliente:
+          </label>
+          <input
+            type="text"
+            id="settingCustomerName"
+            class="w-full p-2.5 rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block font-bold text-amber-950 mb-1">
+            Premio / Recompensa:
+          </label>
+          <textarea
+            id="settingRewardText"
+            rows="2"
+            class="w-full p-2.5 rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+            required
+          ></textarea>
+        </div>
+
+        <div class="pt-2 border-t border-amber-100">
+          <label class="block font-bold text-amber-950 mb-1 flex items-center space-x-1">
+            <i class="fa-solid fa-key text-amber-600"></i>
+            <span>Nuevo PIN de Empleado:</span>
+          </label>
+          <input
+            type="text"
+            id="settingPin"
+            class="w-full p-2.5 rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono font-bold text-center text-sm"
+            required
+          />
+        </div>
+
+        <p id="settingsSavedMsg" class="text-xs font-bold text-center hidden"></p>
+
+        <div class="flex space-x-3 pt-2">
+          <button
+            type="button"
+            id="cancelSettingsBtn"
+            class="flex-1 py-2.5 rounded-xl border border-amber-300 text-amber-900 font-bold"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="flex-1 py-2.5 rounded-xl bg-amber-600 text-white font-bold hover:bg-amber-700 shadow-md shadow-amber-600/20"
+          >
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL_SLOTS = 10;
+    const DEFAULT_PIN = 'perrunos26';
+
+    let appState = {
+      stamps: Array(TOTAL_SLOTS).fill(false),
+      businessName: 'Bark Bites - Snacks Artesanales',
+      customerName: 'Mascota',
+      rewardText: '1 Bolsita de Premios Naturales Gratis',
+      pin: DEFAULT_PIN,
+      soundEnabled: true
+    };
+
+    let isStaffUnlocked = false;
+    let activeModalTarget = null; // 'slot_click', 'unlock_mode', 'settings_auth', 'reset_auth'
+    let pendingSlotIndex = null;
+    let showPinText = false;
+
+    // Elementos DOM
+    const stampGrid = document.getElementById('stampGrid');
+    const stampsCountBadge = document.getElementById('stampsCountBadge');
+    const progressBar = document.getElementById('progressBar');
+    const cardBusinessName = document.getElementById('cardBusinessName');
+    const cardCustomerName = document.getElementById('cardCustomerName');
+    const cardRewardText = document.getElementById('cardRewardText');
+    const footerBusinessName = document.getElementById('footerBusinessName');
+    const resetCustomerName = document.getElementById('resetCustomerName');
+    
+    const rewardBox = document.getElementById('rewardBox');
+    const rewardIconBox = document.getElementById('rewardIconBox');
+    const rewardIcon = document.getElementById('rewardIcon');
+    const rewardHeading = document.getElementById('rewardHeading');
+    const rewardSubtext = document.getElementById('rewardSubtext');
+
+    const toggleStaffBtn = document.getElementById('toggleStaffBtn');
+    const staffLockIcon = document.getElementById('staffLockIcon');
+    const staffLockText = document.getElementById('staffLockText');
+    const toggleSoundBtn = document.getElementById('toggleSoundBtn');
+    const soundIcon = document.getElementById('soundIcon');
+
+    const pinModal = document.getElementById('pinModal');
+    const pinForm = document.getElementById('pinForm');
+    const pinInput = document.getElementById('pinInput');
+    const pinErrorMsg = document.getElementById('pinErrorMsg');
+    const togglePinVisibilityBtn = document.getElementById('togglePinVisibilityBtn');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    const resetConfirmModal = document.getElementById('resetConfirmModal');
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsForm = document.getElementById('settingsForm');
+
+    function loadSavedState() {
+      try {
+        const saved = localStorage.getItem('dog_loyalty_html_v1');
+        if (saved) {
+          appState = { ...appState, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.error("Error al cargar estado local", e);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('dog_loyalty_html_v1', JSON.stringify(appState));
+    }
+
+    function playAudio(type) {
+      if (!appState.soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        if (type === 'stamp') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(300, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.12);
+        } else if (type === 'reward') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + idx * 0.08);
+            osc.stop(ctx.currentTime + idx * 0.08 + 0.25);
+          });
+        } else if (type === 'error') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, ctx.currentTime);
+          osc.frequency.setValueAtTime(120, ctx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
+        }
+      } catch (e) {}
+    }
+
+    function renderApp() {
+      // Información textual
+      cardBusinessName.textContent = appState.businessName;
+      cardCustomerName.textContent = appState.customerName;
+      cardRewardText.textContent = appState.rewardText;
+      footerBusinessName.textContent = appState.businessName;
+      resetCustomerName.textContent = appState.customerName;
+
+      // Estado del sonido
+      soundIcon.className = appState.soundEnabled 
+        ? "fa-solid fa-volume-high" 
+        : "fa-solid fa-volume-xmark text-amber-400";
+
+      // Botón de modo empleado
+      if (isStaffUnlocked) {
+        toggleStaffBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all bg-emerald-600 text-white shadow-md shadow-emerald-600/20 pulse-subtle";
+        staffLockIcon.className = "fa-solid fa-unlock";
+        staffLockText.textContent = "Modo Personal (Desbloqueado)";
+      } else {
+        toggleStaffBtn.className = "px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all bg-amber-100 text-amber-900 hover:bg-amber-200";
+        staffLockIcon.className = "fa-solid fa-lock";
+        staffLockText.textContent = "Modo Cliente (Protegido)";
+      }
+
+      // Conteo de sellos
+      const stampedCount = appState.stamps.filter(Boolean).length;
+      stampsCountBadge.textContent = `${stampedCount} / 10`;
+      progressBar.style.width = `${(stampedCount / TOTAL_SLOTS) * 100}%`;
+
+      // Renderizar casillas
+      stampGrid.innerHTML = '';
+      appState.stamps.forEach((isStamped, index) => {
+        const isRewardSlot = index === TOTAL_SLOTS - 1;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        
+        let baseClass = "relative aspect-square rounded-2xl flex flex-col items-center justify-center transition-all transform active:scale-95 border-2 shadow-sm ";
+        
+        if (isStamped) {
+          if (isRewardSlot) {
+            baseClass += "bg-amber-500 border-amber-600 text-white shadow-amber-500/30 ring-2 ring-amber-300";
+          } else {
+            baseClass += "bg-amber-600 border-amber-700 text-white shadow-amber-600/20";
+          }
+        } else {
+          if (isRewardSlot) {
+            baseClass += "bg-amber-50 border-dashed border-amber-400 text-amber-600 hover:bg-amber-100/50";
+          } else {
+            baseClass += "bg-amber-50/50 border-dashed border-amber-300 text-amber-400 hover:bg-amber-100/40";
+          }
+        }
+
+        btn.className = baseClass;
+
+        const slotNumber = document.createElement('span');
+        slotNumber.className = `absolute top-1 left-1.5 text-[10px] font-bold ${isStamped ? 'text-amber-200' : 'text-amber-400'}`;
+        slotNumber.textContent = `#${index + 1}`;
+        btn.appendChild(slotNumber);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = "flex flex-col items-center";
+
+        if (isStamped) {
+          contentDiv.className += " stamp-pop";
+          if (isRewardSlot) {
+            contentDiv.innerHTML = `<i class="fa-solid fa-gift text-2xl text-amber-100 drop-shadow-sm"></i>`;
+          } else {
+            contentDiv.innerHTML = `<i class="fa-solid fa-bone text-xl text-amber-100 rotate-45 drop-shadow-sm"></i>`;
+          }
+        } else {
+          if (isRewardSlot) {
+            contentDiv.innerHTML = `<i class="fa-solid fa-gift text-xl text-amber-500 pulse-subtle"></i>`;
+          } else {
+            contentDiv.innerHTML = `<i class="fa-solid fa-dog text-lg text-amber-300"></i>`;
+          }
+        }
+
+        btn.appendChild(contentDiv);
+        btn.addEventListener('click', () => handleSlotClick(index));
+        stampGrid.appendChild(btn);
+      });
+
+      // Estado del contenedor de recompensa
+      const isComplete = stampedCount === TOTAL_SLOTS;
+      if (isComplete) {
+        rewardBox.className = "mt-4 p-4 rounded-2xl border-2 bg-amber-100 border-amber-500 ring-2 ring-amber-400/50 shadow-lg transition-all";
+        rewardIconBox.className = "p-2.5 rounded-xl bg-amber-500 text-white";
+        rewardIcon.className = "fa-solid fa-sparkles text-xl";
+        rewardHeading.textContent = "🎉 ¡Premio Listo para Reclamar!";
+        rewardSubtext.classList.remove('hidden');
+      } else {
+        rewardBox.className = "mt-4 p-4 rounded-2xl border-2 bg-amber-50/60 border-amber-200 transition-all";
+        rewardIconBox.className = "p-2.5 rounded-xl bg-amber-200 text-amber-800";
+        rewardIcon.className = "fa-solid fa-award text-xl";
+        rewardHeading.textContent = "Premio al completar la tarjeta:";
+        rewardSubtext.classList.add('hidden');
+      }
+    }
+
+    function handleSlotClick(index) {
+      if (isStaffUnlocked) {
+        toggleStamp(index);
+      } else {
+        pendingSlotIndex = index;
+        openPinModal('slot_click');
+      }
+    }
+
+    function toggleStamp(index) {
+      const currentState = appState.stamps[index];
+      appState.stamps[index] = !currentState;
+      saveState();
+
+      const stampedCount = appState.stamps.filter(Boolean).length;
+      if (stampedCount === TOTAL_SLOTS) {
+        playAudio('reward');
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 90,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+      } else {
+        playAudio('stamp');
+      }
+
+      renderApp();
+    }
+
+    function openPinModal(target) {
+      activeModalTarget = target;
+      pinInput.value = '';
+      pinErrorMsg.classList.add('hidden');
+      showPinText = false;
+      pinInput.type = "password";
+      eyeIcon.className = "fa-solid fa-eye";
+      pinModal.classList.remove('hidden');
+      setTimeout(() => pinInput.focus(), 100);
+    }
+
+    function closePinModal() {
+      pinModal.classList.add('hidden');
+      pinInput.value = '';
+      pendingSlotIndex = null;
+    }
+
+    togglePinVisibilityBtn.addEventListener('click', () => {
+      showPinText = !showPinText;
+      pinInput.type = showPinText ? "text" : "password";
+      eyeIcon.className = showPinText ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    });
+
+    pinForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const entered = pinInput.value;
+
+      if (entered === appState.pin) {
+        playAudio('stamp');
+        closePinModal();
+
+        if (activeModalTarget === 'slot_click' && pendingSlotIndex !== null) {
+          toggleStamp(pendingSlotIndex);
+        } else if (activeModalTarget === 'unlock_mode') {
+          isStaffUnlocked = true;
+          renderApp();
+        } else if (activeModalTarget === 'settings_auth') {
+          openSettingsModal();
+        } else if (activeModalTarget === 'reset_auth') {
+          resetConfirmModal.classList.remove('hidden');
+        }
+      } else {
+        playAudio('error');
+        pinErrorMsg.textContent = "PIN incorrecto. Revisa y vuelve a intentarlo.";
+        pinErrorMsg.classList.remove('hidden');
+        pinInput.value = '';
+      }
+    });
+
+    document.getElementById('closePinModalBtn').addEventListener('click', closePinModal);
+    document.getElementById('cancelPinBtn').addEventListener('click', closePinModal);
+
+    toggleStaffBtn.addEventListener('click', () => {
+      if (isStaffUnlocked) {
+        isStaffUnlocked = false;
+        renderApp();
+      } else {
+        openPinModal('unlock_mode');
+      }
+    });
+
+    toggleSoundBtn.addEventListener('click', () => {
+      appState.soundEnabled = !appState.soundEnabled;
+      saveState();
+      renderApp();
+    });
+
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      openPinModal('settings_auth');
+    });
+
+    function openSettingsModal() {
+      document.getElementById('settingBusinessName').value = appState.businessName;
+      document.getElementById('settingCustomerName').value = appState.customerName;
+      document.getElementById('settingRewardText').value = appState.rewardText;
+      document.getElementById('settingPin').value = appState.pin;
+      document.getElementById('settingsSavedMsg').classList.add('hidden');
+      settingsModal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      settingsModal.classList.add('hidden');
+    }
+
+    document.getElementById('closeSettingsModalBtn').addEventListener('click', closeSettingsModal);
+    document.getElementById('cancelSettingsBtn').addEventListener('click', closeSettingsModal);
+
+    settingsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newBus = document.getElementById('settingBusinessName').value.trim();
+      const newCus = document.getElementById('settingCustomerName').value.trim();
+      const newRew = document.getElementById('settingRewardText').value.trim();
+      const newPin = document.getElementById('settingPin').value.trim();
+
+      if (!newPin) {
+        const msg = document.getElementById('settingsSavedMsg');
+        msg.textContent = "El PIN no puede estar vacío";
+        msg.className = "text-xs font-bold text-center text-rose-600";
+        msg.classList.remove('hidden');
+        return;
+      }
+
+      appState.businessName = newBus || 'Mi Negocio';
+      appState.customerName = newCus || 'Mascota';
+      appState.rewardText = newRew || 'Premio Especial';
+      appState.pin = newPin;
+
+      saveState();
+      renderApp();
+
+      const msg = document.getElementById('settingsSavedMsg');
+      msg.textContent = "¡Configuración guardada con éxito!";
+      msg.className = "text-xs font-bold text-center text-emerald-600";
+      msg.classList.remove('hidden');
+
+      setTimeout(() => {
+        closeSettingsModal();
+      }, 1200);
+    });
+
+    document.getElementById('resetCardBtn').addEventListener('click', () => {
+      openPinModal('reset_auth');
+    });
+
+    document.getElementById('cancelResetBtn').addEventListener('click', () => {
+      resetConfirmModal.classList.add('hidden');
+    });
+
+    document.getElementById('confirmResetBtn').addEventListener('click', () => {
+      appState.stamps = Array(TOTAL_SLOTS).fill(false);
+      saveState();
+      renderApp();
+      playAudio('stamp');
+      resetConfirmModal.classList.add('hidden');
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedState();
+      renderApp();
+    });
+  </script>
+</body>
+</html>
   Settings, 
   Award, 
   Sparkles, 
